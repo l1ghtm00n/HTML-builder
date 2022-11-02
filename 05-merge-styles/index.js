@@ -14,7 +14,7 @@ fs.readdir(stylesDir, {withFileTypes: true}, (err, files) => {
             readStream.on('readable', function(){
               let data = readStream.read();
               if (data) {
-                writeStream.write(data);
+                writeStream.write(`${data}\n`);
               }
             });
         }

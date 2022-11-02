@@ -14,7 +14,7 @@ process.stdin.on('data', chunk => {
     if (text == 'exit') {
         end();        
     } else {
-        writeStream.write(text);        
+        writeStream.write(`${text}\n`);        
     }     
 });
 
