@@ -6,6 +6,5 @@ readStream.on('readable', function(){
     let data = readStream.read();
     if (data) {
         console.log(data);
-    }
-    
+    }    
 });
