@@ -50,7 +50,7 @@ async function copyFile (dir, fileFrom, fileTo) {
 }
 
 function copyFolder(dir) {
-    fs.readdir(path.join(__dirname, dir), {withFileTypes: true}, (err, files) => {
+    fsHandler.readdir(path.join(__dirname, dir), {withFileTypes: true}, (err, files) => {
         if (err)
           console.log(err);
         else {
@@ -67,8 +67,8 @@ function copyFolder(dir) {
       });
 }
 
-function createBundle(dir) {
-    const writeStreamBundle = fs.createWriteStream(path.join(__dirname, projectDir, 'style.css'), 'utf8');
+async function createBundle(dir) {
+    const writeStreamBundle = fsHandler.createWriteStream(path.join(__dirname, projectDir, 'style.css'), 'utf8');
     let stylePath = path.join(__dirname, dir);
     fs.readdir(stylePath, {withFileTypes: true}, (err, files) => {
         if (err)
@@ -90,26 +90,44 @@ function createBundle(dir) {
     });
 }
 
+function isComponent(file, component) {
+  let i=0;
+  while(file[i]!==undefined) {
+    if (file[i].indexOf(component)!==-1) {
+      return i;
+    }
+    i++;
+  }
+  return -1;  
+}
+
+async function insertComponents (dir, textHTML) {
+  const files = await fs.readdir(dir, {withFileTypes: true});
+  let i = 0;
+  for (const file of files) {
+      let el = path.parse(file.name);
+      let indexComponent = isComponent(textHTML, `{{${el.name}}}`);
+      if (el.ext==='.html' && indexComponent!==-1) {
+          let contents = await fs.readFile(path.join(dir, file.name), 'utf8');
+          // contents +='\n';
+          // console.log(contents);
+          textHTML[indexComponent+1] = `\n${textHTML[indexComponent+1]}`;
+          textHTML.splice.apply(textHTML,[indexComponent,1].concat(contents.split('\n').map((line) => `    ${line}`)));
+      }
+  }
+  return textHTML;
+
+}
+
 async function createHTML(dir) {
     let indexHTML;
+    let indexPath = path.join(__dirname, projectDir, 'index.html');
     try{
-        indexHTML = await fs.open(path.join(__dirname, projectDir, 'index.html'));
-        const writeStreamHTML = indexHTML.createWriteStream();
-        let indexPath = path.join(__dirname, dir);
-        const files = await fs.readdir(indexPath, {withFileTypes: true});              
-        files.forEach(async file => {
-            let el = path.parse(file.name);
-            if (el.ext==='.html') {
-                let readStream = fsHandler.createReadStream(path.join(indexPath, file.name), {encoding: 'utf8'});
-                readStream.on('readable', function(){
-                  let data = readStream.read();
-                  if (data) {
-                    console.log(data);
-                    // writeStream.write(`${data}\n`);
-                  }
-                });
-            }
-        });
+        indexHTML = await fs.open(indexPath);
+        let componentPath = path.join(__dirname, dir);
+        const line = await fs.readFile(indexPath, 'utf8');
+        let newData = await insertComponents(componentPath, line.split('\n'));
+        fs.writeFile(indexPath, newData);
     } finally {
         await indexHTML?.close();
     }
@@ -121,9 +139,9 @@ async function buildPage() {
     // clearFolder(projectDir);
     try {
         let projectFolder = await createFolder(projectDir);
-        // createFolder(projectDir,assetsDir);
-        // copyFolder(assetsDir);
-        // createBundle(stylesDir);
+        // let createAssets = await createFolder(projectDir,assetsDir);
+        // let copyAssets = await copyFolder(assetsDir);
+        // let createCSS = await createBundle(stylesDir);
         let copyIndex = await copyFile('','template.html','index.html');
         let createIndex = await createHTML(componentsDir);
     } catch(err) {
