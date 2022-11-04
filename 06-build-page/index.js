@@ -6,25 +6,13 @@ const assetsDir = '/assets';
 const stylesDir = '/styles';
 const componentsDir = '/components';
 
-function clearFolder (dir) {
-    fs.readdir(path.join(__dirname, dir), {withFileTypes: true}, (err, files) => {
-        if (err) throw err;        
-        for (const file of files) {            
-          if(file.isFile()) {
-            fs.unlink(path.join(__dirname, `${dir}/${file.name}`), (err) => {
-              if (err) throw err;            
-            });
-          } else {
-            let newDir = `${dir}/${file.name}`;
-            console.log(newDir);
-            fs.rmdir(path.join(__dirname, newDir), (err) => {
-                if (err) {
-                    clearFolder(newDir);
-                } 
-            });
-          }
-        }
-    });
+async function clearFolder (dir) {
+  try {
+    await fs.access(path.join(__dirname, dir), fs.constants.W_OK)
+    .then(async () => await fs.rm(path.join(__dirname, dir), { recursive: true }));
+  } catch (err) {
+    console.error(`Error: "${err}" while deleting ${dir}.`)
+  }
 }
 
 async function createFolder (...dir) {
@@ -117,8 +105,8 @@ async function createHTML(dir) {
 
 
 async function buildPage() {
-  // clearFolder(projectDir);
   try {
+    await clearFolder(projectDir);
     await createFolder(projectDir);
     await createFolder(projectDir,assetsDir);
     await copyFolder(assetsDir);
