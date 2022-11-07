@@ -8,7 +8,7 @@ function end() {
 }
 
 const writeStream = fs.createWriteStream(path.resolve(__dirname, 'text.txt'), 'utf8');
-console.log('Beginning of task: 02 write file');
+console.log('Beginning of task "02 write file". Please begin to write some text:');
 process.stdin.on('data', chunk => {
     const text = chunk.toString().trim();
     if (text == 'exit') {
