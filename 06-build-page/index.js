@@ -6,12 +6,22 @@ const assetsDir = '/assets';
 const stylesDir = '/styles';
 const componentsDir = '/components';
 
+async function isFolderExist(dir) {
+  try {
+    await fs.access(path.join(__dirname, dir), fs.constants.R_OK | fs.constants.W_OK);
+  } catch (err) {
+    return false;
+  }
+  return true;
+}
+
 async function clearFolder (dir) {
   try {
-    await fs.access(path.join(__dirname, dir), fs.constants.W_OK)
-    .then(async () => await fs.rm(path.join(__dirname, dir), { recursive: true }));
+    if (isFolderExist(dir)) {
+      await fs.rm(path.join(__dirname, dir), { recursive: true });
+    }
   } catch (err) {
-    console.error(`Error: "${err}" while deleting ${dir}.`)
+    // console.error(`Error: "${err}" while deleting ${dir}.`)
   }
 }
 
